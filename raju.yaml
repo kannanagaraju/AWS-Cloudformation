@@ -1,0 +1,108 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: raju VPC
+Resources:
+  rajuVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+       - Key: Name
+         Value: raju-VPC 
+  rajuPublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId:
+        Ref: rajuVPC 
+      CidrBlock: 10.0.0.0/24
+      AvailabilityZone: "us-west-1a"
+      MapPublicIpOnLaunch: "true" 
+      Tags:
+      - Key: Name
+        Value: raju-Public-SN            
+  rajuPrivateSubnet:
+      Type: AWS::EC2::Subnet
+      Properties:
+        VpcId:
+          Ref: rajuVPC 
+        CidrBlock: 10.0.1.0/24
+        AvailabilityZone: "us-west-1a"
+        Tags:
+        - Key: Name
+          Value: raju-Private-SN
+
+  rajuInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value: raju-IGW
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId:
+         Ref: rajuVPC
+      InternetGatewayId:
+         Ref: rajuInternetGateway
+  rajuPublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:  
+        Ref: rajuVPC
+      Tags:
+      - Key: Name
+        Value: raju-Pub-RT
+      
+  rajuPrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:  
+        Ref: rajuVPC
+      Tags:
+      - Key: Name
+        Value: raju-Pvt-RT
+  rajuPublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: rajuPublicSubnet
+      RouteTableId:
+        Ref: rajuPublicRouteTable
+
+  rajuPrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Ref: rajuPrivateSubnet
+      RouteTableId:
+        Ref: rajuPrivateRouteTable
+  rajuIGWRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+       RouteTableId:
+         Ref: rajuPublicRouteTable
+       DestinationCidrBlock: 0.0.0.0/0
+       GatewayId:
+         Ref: rajuInternetGateway
+  rajuInstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow http to client host
+      VpcId: 
+        Ref: rajuVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0 
+      Tags:
+        - Key: Name
+          Value: raju-SG 
